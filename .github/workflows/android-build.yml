@@ -57,18 +57,15 @@ jobs:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-
   deploy:
     name: 🚀 Deploy to Google Play
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
 
-    environment:
-      name: production
-      url: https://play.google.com/console
+    if: ${{ env.PLAY_DEPLOY == 'true' }}
 
     env:
+      PLAY_DEPLOY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
       APP_PACKAGE_NAME: com.demoapp
       AAB_PATH: android/app/build/outputs/bundle/release/app-release.aab
       DEFAULT_TRACK: internal
