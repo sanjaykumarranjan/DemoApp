@@ -30,6 +30,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 🔐 Decode Keystore
+      - name: 🔐 Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/demoapp-release.keystore
+
+      # 🔑 Create gradle.properties dynamically
+      - name: 🔑 Create signing config
+        run: |
+          echo "MYAPP_UPLOAD_STORE_FILE=demoapp-release.keystore" >> android/gradle.properties
+          echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
+          echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.ANDROID_STORE_PASSWORD }}" >> android/gradle.properties
+          echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
+
       - name: 🔐 Grant Gradle Permission
         run: chmod +x android/gradlew
 
