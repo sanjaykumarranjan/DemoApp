@@ -57,15 +57,12 @@ jobs:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-  deploy:
+    deploy:
     name: 🚀 Deploy to Google Play
     needs: build
     runs-on: ubuntu-latest
 
-    if: ${{ env.PLAY_DEPLOY == 'true' }}
-
     env:
-      PLAY_DEPLOY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
       APP_PACKAGE_NAME: com.demoapp
       AAB_PATH: android/app/build/outputs/bundle/release/app-release.aab
       DEFAULT_TRACK: internal
@@ -79,19 +76,22 @@ jobs:
           name: release-aab
 
       - name: 🔐 Create Service Account JSON
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
         run: |
           echo "${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}" > play-account.json
 
       - name: 🚀 Install Fastlane
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
         run: sudo gem install fastlane -NV
 
       - name: 🚀 Deploy to Play Store
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
         run: |
           fastlane supply \
             --aab ${{ env.AAB_PATH }} \
             --package_name ${{ env.APP_PACKAGE_NAME }} \
             --json_key play-account.json \
-            --track ${{ github.event.inputs.track || env.DEFAULT_TRACK }} \
+            --track ${{ env.DEFAULT_TRACK }} \
             --release_status completed \
             --rollout ${{ env.ROLLOUT_PERCENTAGE }} \
             --skip_upload_metadata true \
