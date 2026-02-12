@@ -1,4 +1,4 @@
-name: Android CI Build
+name: Android CI/CD
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - main
 
 jobs:
+
   build-android:
     runs-on: ubuntu-latest
 
@@ -30,12 +31,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🔐 Decode Keystore
       - name: 🔐 Decode Keystore
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/demoapp-release.keystore
 
-      # 🔑 Create gradle.properties dynamically
       - name: 🔑 Create signing config
         run: |
           echo "MYAPP_UPLOAD_STORE_FILE=demoapp-release.keystore" >> android/gradle.properties
@@ -54,12 +53,13 @@ jobs:
       - name: 📦 Upload AAB Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
+          name: release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-    deploy:
+
+  deploy:
     name: 🚀 Deploy to Google Play
-    needs: build
+    needs: build-android
     runs-on: ubuntu-latest
 
     env:
