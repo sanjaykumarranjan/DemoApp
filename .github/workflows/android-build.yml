@@ -56,3 +56,47 @@ jobs:
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+
+
+  deploy:
+    name: 🚀 Deploy to Google Play
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+
+    environment:
+      name: production
+      url: https://play.google.com/console
+
+    env:
+      APP_PACKAGE_NAME: com.demoapp
+      AAB_PATH: android/app/build/outputs/bundle/release/app-release.aab
+      DEFAULT_TRACK: internal
+      RELEASE_NOTES: "Automated CI/CD Release"
+      ROLLOUT_PERCENTAGE: 0.1
+
+    steps:
+      - name: 📥 Download AAB Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-aab
+
+      - name: 🔐 Create Service Account JSON
+        run: |
+          echo "${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}" > play-account.json
+
+      - name: 🚀 Install Fastlane
+        run: sudo gem install fastlane -NV
+
+      - name: 🚀 Deploy to Play Store
+        run: |
+          fastlane supply \
+            --aab ${{ env.AAB_PATH }} \
+            --package_name ${{ env.APP_PACKAGE_NAME }} \
+            --json_key play-account.json \
+            --track ${{ github.event.inputs.track || env.DEFAULT_TRACK }} \
+            --release_status completed \
+            --rollout ${{ env.ROLLOUT_PERCENTAGE }} \
+            --skip_upload_metadata true \
+            --skip_upload_images true \
+            --skip_upload_screenshots true
